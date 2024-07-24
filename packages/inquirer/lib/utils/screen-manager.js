@@ -5,8 +5,8 @@ var _ = {
 };
 var util = require('./readline');
 var cliWidth = require('cli-width');
-var stripAnsi = require('strip-ansi');
-var stringWidth = require('string-width');
+
+let stripAnsi, stringWidth;
 
 function height(content) {
   return content.split('\n').length;
@@ -23,9 +23,17 @@ class ScreenManager {
     this.extraLinesUnderPrompt = 0;
 
     this.rl = rl;
+
+    this.loadDependencies();
   }
 
-  render(content, bottomContent) {
+  async loadDependencies() {
+    stripAnsi = (await import('strip-ansi')).default;
+    stringWidth = (await import('string-width')).default;
+  }
+
+  async render(content, bottomContent) {
+    await this.loadDependencies();
     this.rl.output.unmute();
     this.clean(this.extraLinesUnderPrompt);
 
@@ -37,7 +45,7 @@ class ScreenManager {
     var rawPromptLine = stripAnsi(promptLine);
 
     // Remove the rl.line from our prompt. We can't rely on the content of
-    // rl.line (mainly because of the password prompt), so just rely on it's
+    // rl.line (mainly because of the password prompt), so just rely on its
     // length.
     var prompt = rawPromptLine;
     if (this.rl.line.length) {
@@ -56,7 +64,7 @@ class ScreenManager {
     }
 
     // Manually insert an extra line if we're at the end of the line.
-    // This prevent the cursor from appearing at the beginning of the
+    // This prevents the cursor from appearing at the beginning of the
     // current line.
     if (rawPromptLine.length % width === 0) {
       content += '\n';
